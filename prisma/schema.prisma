@@ -7,3 +7,129 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
+
+
+model Customer {
+  id         String    @id @default(uuid())
+  name       String
+  email      String    @unique
+  phone      String    @unique
+  password   String
+  location   String?
+  bookings   Booking[] 
+  reviews    Review[]  
+  createdAt  DateTime  @default(now())
+}
+
+model Provider {
+  id          String    @id @default(uuid())
+  name        String
+  email       String    @unique
+  phone       String    @unique
+  password    String
+  location    String?
+  services    Pricing[] 
+  bookings    Booking[] 
+  reviews     Review[]  
+  documents   Document[] 
+  isVerified  Boolean   @default(false) 
+  createdAt   DateTime  @default(now())
+}
+
+
+model Document {
+  id          String    @id @default(uuid())
+  provider    Provider  @relation(fields: [providerId], references: [id])
+  providerId  String
+  type        DocumentType
+  url         String 
+  status      VerificationStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+}
+
+
+enum DocumentType {
+  ID_PROOF
+  BUSINESS_LICENSE
+  ADDRESS_PROOF
+}
+
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+
+model Service {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  pricing     Pricing[]
+  bookings    Booking[] 
+}
+
+model Pricing {
+  id          String    @id @default(uuid())
+  provider    Provider  @relation(fields: [providerId], references: [id])
+  providerId  String
+  service     Service   @relation(fields: [serviceId], references: [id])
+  serviceId   String
+  cost        Float
+  currency    String    @default("INR") 
+  createdAt   DateTime  @default(now())
+
+  Booking Booking[]
+}
+
+model Booking {
+  id          String    @id @default(uuid())
+  customer    Customer  @relation(fields: [customerId], references: [id])
+  customerId  String
+  provider    Provider  @relation(fields: [providerId], references: [id])
+  providerId  String
+  service     Service   @relation(fields: [serviceId], references: [id])
+  serviceId   String
+  pricing     Pricing   @relation(fields: [pricingId], references: [id])
+  pricingId   String
+  date        DateTime
+  status      BookingStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+
+  Payment Payment[]
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model Review {
+  id          String    @id @default(uuid())
+  customer    Customer  @relation(fields: [customerId], references: [id])
+  customerId  String
+  provider    Provider  @relation(fields: [providerId], references: [id])
+  providerId  String
+  rating      Int       @default(5) 
+  comment     String?
+  createdAt   DateTime  @default(now())
+}
+
+model Payment {
+  id          String    @id @default(uuid())
+  booking     Booking   @relation(fields: [bookingId], references: [id])
+  bookingId   String
+  amount      Float
+  status      PaymentStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
